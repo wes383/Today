@@ -1,0 +1,5 @@
+{
+  "name": "Today",
+  "description": "A smart schedule manager that helps you organize your day. Add tasks manually or let AI do it for you from natural language.",
+  "requestFramePermissions": []
+}
