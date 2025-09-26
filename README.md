@@ -7,6 +7,7 @@
 - **Schedule Management:**
   - Easily add and delete your daily tasks and events.
   - Mark tasks as complete to track your progress.
+    <img src="https://github.com/user-attachments/assets/3ddb9bec-0d7d-46a0-8f75-36d6c3ff0d16" width="1024" alt="image" />
 - **AI Assistant:**
   - Chat with an AI to quickly add, query, or manage your schedule using natural language.
 - **Focus Tools:**
@@ -43,7 +44,7 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/today.git
+   git clone https://github.com/wes383/today.git
    cd today
    ```
 
@@ -72,3 +73,5 @@ To build the executable application for your platform, run:
 npm run tauri build
 ```
 After the build is complete, you can find the application files in the `src-tauri/target/release/` directory.
+
+All icons are from [Material Symbols icons](https://fonts.google.com/icons). Sound effects are from [mixkit](https://mixkit.co/free-sound-effects/clock/).
