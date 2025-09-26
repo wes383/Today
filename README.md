@@ -11,8 +11,8 @@
 - **AI Assistant:**
   - Chat with an AI to quickly add, query, or manage your schedule using natural language.
 - **Focus Tools:**
-  - **Focus Timer:**
-  - **Stopwatch:**
+  - **Focus Timer**
+  - **Stopwatch**
 - **Statistics:**
   - Visualize your focus history to understand how you spend your time.
 - **Daily Check-in:**
