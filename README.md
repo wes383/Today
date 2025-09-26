@@ -1,6 +1,6 @@
 # Today
 
-**Today** is a desktop application designed to help you manage your daily schedule, track your focus time, and boost your productivity. It combines schedule management, various timing tools, and an AI assistant to provide a comprehensive productivity solution.
+**Today** is designed to help you manage your daily schedule, track your focus time, and boost your productivity. It combines schedule management, various timing tools, and an AI assistant to provide a comprehensive productivity solution.
 
 ## Features
 
