@@ -6,9 +6,21 @@ const getAiClient = () => {
     const apiKey = localStorage.getItem('geminiApiKey');
 
     if (!apiKey) {
-        throw new Error("Gemini API Key is not set. Please add it in the settings.");
+        throw new Error("Gemini API Key is not set. Please open the AI chat (button in the lower left corner) and click the settings icon to add your API key.");
     }
     return new GoogleGenAI({ apiKey });
+};
+
+// Helper to handle common AI errors
+const handleAiError = (error: unknown, defaultMessage: string): never => {
+    console.error("Error calling Gemini API:", error);
+
+    // If it's our API key error, pass it through
+    if (error instanceof Error && error.message.includes("Gemini API Key is not set")) {
+        throw error;
+    }
+
+    throw new Error(defaultMessage);
 };
 
 const itemSchema = {
@@ -56,7 +68,7 @@ export const parseScheduleWithAI = async (prompt: string, schedule: ScheduleItem
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowDate = tomorrow.toISOString().split('T')[0];
-        
+
         const systemInstruction = `You are a proactive and intelligent scheduling assistant. Your primary goal is to help users organize their time by creating detailed and useful schedule items.
 You will be given the user's current schedule as a JSON object. Use this schedule as context to avoid conflicts and to intelligently place new items.
 
@@ -112,14 +124,14 @@ Key instructions:
 
         // Failsafe in case the model doesn't follow instructions and returns a single object
         if (!Array.isArray(parsedJson)) {
-            if(parsedJson && typeof parsedJson === 'object' && 'title' in parsedJson && 'date' in parsedJson) {
+            if (parsedJson && typeof parsedJson === 'object' && 'title' in parsedJson && 'date' in parsedJson) {
                 parsedJson = [parsedJson];
             } else {
                 console.error("AI response was not an array or a valid single item:", parsedJson);
                 return null;
             }
         }
-        
+
         const parsedData = parsedJson as Omit<ScheduleItem, 'id'>[];
 
         if (parsedData.length === 0) {
@@ -127,7 +139,7 @@ Key instructions:
         }
 
         const validItems = parsedData
-            .filter(item => item.title && item.date) // Ensure core fields exist
+            .filter(item => item.title && item.date)
             .map(item => ({
                 title: item.title,
                 description: item.description || null,
@@ -147,7 +159,7 @@ Key instructions:
                 return timeMatch[1];
             }
             // If a parsable HH:mm pattern isn't found, nullify the time to avoid display errors.
-            return null; 
+            return null;
         };
 
         // Clean time formats for both start and end times
@@ -161,7 +173,7 @@ Key instructions:
         const finalItems = cleanedItems.map(item => {
             if (item.time && !item.endTime) {
                 const textToParse = `${item.title} ${item.description || ''}`.toLowerCase();
-                
+
                 // Regex to find patterns like "for 1 hour", "for 30 minutes", "90 min", "2 hrs"
                 const durationRegex = /(?:for|lasts?|lasting)\s*(\d+(?:\.\d+)?)\s*(hour|hr|minute|min)s?/i;
                 const match = textToParse.match(durationRegex);
@@ -179,15 +191,15 @@ Key instructions:
 
                     if (durationMinutes > 0) {
                         const [startHour, startMinute] = item.time!.split(':').map(Number);
-                        
+
                         // Use the item's date to correctly calculate the end time for any day
                         const startDate = new Date(`${item.date}T${item.time}`);
-                        
+
                         const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
-                        
+
                         const endHour = String(endDate.getHours()).padStart(2, '0');
                         const endMinute = String(endDate.getMinutes()).padStart(2, '0');
-                        
+
                         return { ...item, endTime: `${endHour}:${endMinute}` };
                     }
                 }
@@ -199,8 +211,7 @@ Key instructions:
         return finalItems.length > 0 ? finalItems : null;
 
     } catch (error) {
-        console.error("Error calling Gemini API:", error);
-        throw new Error("Failed to parse schedule with AI. Please try again or add it manually.");
+        handleAiError(error, "Failed to parse schedule with AI. Please try again or add it manually.");
     }
 };
 
@@ -240,7 +251,6 @@ Key Instructions:
         return response.text;
 
     } catch (error) {
-        console.error("Error calling Gemini API for chat:", error);
-        throw new Error("Failed to get an answer from AI. Please try again.");
+        handleAiError(error, "Failed to get an answer from AI. Please try again.");
     }
 };

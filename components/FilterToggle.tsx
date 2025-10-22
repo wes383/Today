@@ -7,17 +7,17 @@ interface FilterToggleProps {
   isTimerActive: boolean;
 }
 
-const FilterToggle: React.FC<FilterToggleProps> = ({ currentFilter, onFilterChange, isTimerActive }) => {
-  const baseClasses = 'px-5 py-2 rounded-full font-semibold transition-colors duration-200 text-sm';
-  const inactiveClasses = 'bg-white text-slate-600 hover:bg-slate-100';
+const BASE_CLASSES = 'px-5 py-2 rounded-full font-semibold transition-colors duration-200 text-sm';
+const INACTIVE_CLASSES = 'bg-white text-slate-600 hover:bg-slate-100';
+const BASE_ACTIVE = 'text-white shadow-md';
 
+const FilterToggle: React.FC<FilterToggleProps> = ({ currentFilter, onFilterChange, isTimerActive }) => {
   const getActiveClasses = (filter: FilterType) => {
-    const baseActive = 'text-white shadow-md';
     switch (filter) {
         case 'today':
-            return `bg-teal-500 ${baseActive}`;
+            return `bg-teal-500 ${BASE_ACTIVE}`;
         case 'all':
-            return `bg-sky-600 ${baseActive}`;
+            return `bg-sky-600 ${BASE_ACTIVE}`;
         case 'completed':
             return `bg-slate-300 text-slate-700 shadow-md`;
     }
@@ -27,19 +27,19 @@ const FilterToggle: React.FC<FilterToggleProps> = ({ currentFilter, onFilterChan
     <div className="flex justify-center p-1 bg-slate-200 rounded-full">
       <button
         onClick={() => onFilterChange('today')}
-        className={`${baseClasses} ${currentFilter === 'today' && !isTimerActive ? getActiveClasses('today') : inactiveClasses}`}
+        className={`${BASE_CLASSES} ${currentFilter === 'today' && !isTimerActive ? getActiveClasses('today') : INACTIVE_CLASSES}`}
       >
         Today
       </button>
       <button
         onClick={() => onFilterChange('all')}
-        className={`${baseClasses} ${currentFilter === 'all' && !isTimerActive ? getActiveClasses('all') : inactiveClasses}`}
+        className={`${BASE_CLASSES} ${currentFilter === 'all' && !isTimerActive ? getActiveClasses('all') : INACTIVE_CLASSES}`}
       >
         All
       </button>
       <button
         onClick={() => onFilterChange('completed')}
-        className={`${baseClasses} ${currentFilter === 'completed' && !isTimerActive ? getActiveClasses('completed') : inactiveClasses}`}
+        className={`${BASE_CLASSES} ${currentFilter === 'completed' && !isTimerActive ? getActiveClasses('completed') : INACTIVE_CLASSES}`}
       >
         Completed
       </button>

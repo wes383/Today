@@ -5,13 +5,15 @@ import Icon from './Icon';
 
 interface AddItemFormProps {
   onAddItems: (itemData: ScheduleItemData[]) => void;
+  onUpdateItem?: (id: string, itemData: ScheduleItemData) => void;
   scheduleItems: ScheduleItem[];
+  editingItem?: ScheduleItem | null;
 }
 
 type FormMode = 'ai' | 'manual';
 type View = 'form' | 'confirm';
 
-const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) => {
+const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, onUpdateItem, scheduleItems, editingItem }) => {
   const [mode, setMode] = useState<FormMode>('ai');
   const [view, setView] = useState<View>('form');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -30,23 +32,45 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) 
   
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  const aiPlaceholders = [
+    "e.g., Team meeting tomorrow 2pm",
+    "e.g., Gym session every Monday 6am",
+    "e.g., Dentist appointment next Friday 3pm",
+    "e.g., Lunch with Sarah tomorrow noon",
+    "e.g., Project deadline on Dec 15",
+    "e.g., Weekend trip plan from Oct 25 to Oct 27"
+  ];
+  
+  // Select a random placeholder on component mount
+  const [aiPlaceholder] = useState(() => 
+    aiPlaceholders[Math.floor(Math.random() * aiPlaceholders.length)]
+  );
+
+  // Initialize form with editing item data if provided
+  useEffect(() => {
+    if (editingItem) {
+      setTitle(editingItem.title);
+      setDescription(editingItem.description || '');
+      setDate(editingItem.date);
+      setTime(editingItem.time || '');
+      setEndTime(editingItem.endTime || '');
+      setMode('manual');
+    }
+  }, [editingItem]);
+
   useEffect(() => {
     if (mode === 'manual') {
-      // Pre-fill with current date if not already set.
       if (!date) {
         const now = new Date();
-        
-        // Format date as YYYY-MM-DD for the input
         const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         setDate(`${year}-${month}-${day}`);
       }
 
-      // Focus the title input field
       const timer = setTimeout(() => {
         titleInputRef.current?.focus();
-      }, 50); // Small delay to ensure the input is rendered and visible
+      }, 50);
 
       return () => clearTimeout(timer);
     }
@@ -87,14 +111,20 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) 
         return;
     }
     setError(null);
-    onAddItems([{
+    
+    const itemData: ScheduleItemData = {
       title,
       description: description || null,
       date,
       time: time || null,
       endTime: endTime || null,
-    }]);
-    // Resetting form isn't necessary as modal will close
+    };
+    
+    if (editingItem && onUpdateItem) {
+      onUpdateItem(editingItem.id, itemData);
+    } else {
+      onAddItems([itemData]);
+    }
   };
 
   const handleToggleSelection = (index: number) => {
@@ -192,20 +222,22 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) 
 
   return (
     <div className="px-6 pb-6 pt-12">
-      <div className="flex border border-slate-200 rounded-xl p-1 mb-6">
-        <button 
-            onClick={() => setMode('ai')}
-            className={`w-1/2 rounded-lg py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'ai' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
-        >
-            <Icon name="auto_awesome" /> Add with AI
-        </button>
-        <button 
-            onClick={() => setMode('manual')}
-            className={`w-1/2 rounded-lg py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'manual' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
-        >
-            <Icon name="edit" /> Add Manually
-        </button>
-      </div>
+      {!editingItem && (
+        <div className="flex border border-slate-200 rounded-xl p-1 mb-6">
+          <button 
+              onClick={() => setMode('ai')}
+              className={`w-1/2 rounded-lg py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'ai' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
+          >
+              <Icon name="auto_awesome" /> Add with AI
+          </button>
+          <button 
+              onClick={() => setMode('manual')}
+              className={`w-1/2 rounded-lg py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'manual' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
+          >
+              <Icon name="edit" /> Add Manually
+          </button>
+        </div>
+      )}
 
       {error && <div className="bg-red-100 border border-red-300 text-red-700 text-sm p-3 rounded-lg mb-4">{error}</div>}
 
@@ -218,7 +250,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) 
               type="text"
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="e.g., Make a 4 day travel plan for me from Sep 15"
+              placeholder={aiPlaceholder}
               className="w-full pl-4 pr-12 py-3 text-slate-800 bg-slate-100 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-0 transition"
               disabled={isLoading}
               autoComplete="off"
@@ -272,8 +304,8 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItems, scheduleItems }) 
             </div>
 
             <button type="submit" className={`${buttonBaseClasses} bg-slate-800 text-white hover:bg-slate-900`}>
-                <Icon name="add" />
-                <span>Add Manually</span>
+                <Icon name={editingItem ? "check" : "add"} />
+                <span>{editingItem ? 'Update' : 'Add Manually'}</span>
             </button>
         </form>
       )}

@@ -87,10 +87,6 @@ const FocusStats: React.FC<FocusStatsProps> = ({ sessions, onDeleteSession }) =>
     const circumference = 2 * Math.PI * radius;
     const progressOffset = circumference * (1 - progressPercentage / 100);
 
-    const tagInfo = { icon: 'label', color: 'text-blue-500', bg: 'bg-blue-100' };
-
-
-
     const handleDelete = (id: string) => {
         onDeleteSession(id);
     };
@@ -114,8 +110,8 @@ const FocusStats: React.FC<FocusStatsProps> = ({ sessions, onDeleteSession }) =>
 
                                 return (
                                     <li key={name} className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg">
-                                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${tagInfo.bg}`}>
-                                            <Icon name={tagInfo.icon} className={`${tagInfo.color} text-xl`} />
+                                        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-blue-100">
+                                            <Icon name="label" className="text-blue-500 text-xl" />
                                         </div>
                                         <div className="flex-grow">
                                             <div className="flex justify-between items-baseline mb-1">
@@ -124,7 +120,7 @@ const FocusStats: React.FC<FocusStatsProps> = ({ sessions, onDeleteSession }) =>
                                             </div>
                                             <div className="w-full bg-slate-200 rounded-full h-2">
                                                 <div 
-                                                    className={`${tagInfo.color.replace('text-', 'bg-')} h-2 rounded-full`}
+                                                    className="bg-blue-500 h-2 rounded-full"
                                                     style={{ width: `${percentage}%` }}
                                                 ></div>
                                             </div>

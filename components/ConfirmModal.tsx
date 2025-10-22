@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icon from './Icon';
 
 interface ConfirmModalProps {
@@ -13,17 +13,37 @@ interface ConfirmModalProps {
   confirmBtnClass?: string;
 }
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({ 
-    isOpen, 
-    onClose, 
-    onConfirm, 
-    title, 
-    message,
-    iconName = 'warning',
-    iconBgClass = 'bg-yellow-100',
-    iconColorClass = 'text-yellow-500',
-    confirmBtnClass = 'bg-red-500 hover:bg-red-600'
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  iconName = 'warning',
+  iconBgClass = 'bg-yellow-100',
+  iconColorClass = 'text-yellow-500',
+  confirmBtnClass = 'bg-red-500 hover:bg-red-600'
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -43,9 +63,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         onClick={e => e.stopPropagation()}
       >
         <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${iconBgClass} mb-4`}>
-            <Icon name={iconName} className={`text-2xl ${iconColorClass}`} />
+          <Icon name={iconName} className={`text-2xl ${iconColorClass}`} />
         </div>
-        
+
         <h3 className="text-lg font-semibold text-slate-800" id="modal-title">
           {title}
         </h3>
@@ -60,6 +80,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             className={`inline-flex justify-center rounded-full border border-transparent px-6 py-2 text-base font-semibold text-white shadow-sm transition-colors focus:outline-none ${confirmBtnClass}`}
             onClick={handleConfirm}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
           >
             Confirm
           </button>
@@ -67,6 +93,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             className="inline-flex justify-center rounded-full border border-slate-300 bg-white px-6 py-2 text-base font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors focus:outline-none"
             onClick={onClose}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            autoFocus
           >
             Cancel
           </button>

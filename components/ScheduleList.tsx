@@ -8,11 +8,12 @@ interface ScheduleListProps {
   filter: FilterType;
   onDeleteItem: (id: string) => void;
   onToggleComplete: (id: string) => void;
+  onEditItem: (id: string) => void;
   isEditMode: boolean;
   onStartTimeFocus: (durationInSeconds: number) => void;
 }
 
-const ScheduleList: React.FC<ScheduleListProps> = ({ items, filter, onDeleteItem, onToggleComplete, isEditMode, onStartTimeFocus }) => {
+const ScheduleList: React.FC<ScheduleListProps> = ({ items, filter, onDeleteItem, onToggleComplete, onEditItem, isEditMode, onStartTimeFocus }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const filteredItems = items
@@ -67,6 +68,7 @@ const ScheduleList: React.FC<ScheduleListProps> = ({ items, filter, onDeleteItem
             item={item} 
             onDeleteItem={onDeleteItem} 
             onToggleComplete={onToggleComplete}
+            onEditItem={onEditItem}
             isEditMode={isEditMode}
             showDate={showDate}
             onStartTimeFocus={onStartTimeFocus}

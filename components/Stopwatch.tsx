@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Icon from './Icon';
+import DraggableTagList from './DraggableTagList';
 
 interface StopwatchProps {
     onSessionComplete: (durationInSeconds: number, tag: string | null) => void;
     onIsActiveChange?: (isActive: boolean) => void;
+    onConfirmAction?: (title: string, message: string, onConfirm: () => void) => void;
 }
 
-const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChange }) => {
+const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChange, onConfirmAction }) => {
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const [timeSpentInSession, setTimeSpentInSession] = useState(0);
@@ -21,7 +23,6 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
     });
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
-    const [newTag, setNewTag] = useState('');
 
     const timerId = useRef<number | null>(null);
     const tagSelectorRef = useRef<HTMLDivElement | null>(null);
@@ -51,7 +52,7 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
     useEffect(() => {
         document.title = isActive ? `Stopwatch: ${formatTime(secondsElapsed)}` : 'Today';
     }, [secondsElapsed, isActive]);
-    
+
     useEffect(() => {
         try {
             localStorage.setItem('focusTags', JSON.stringify(tags));
@@ -74,22 +75,22 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
     }, [isTagSelectorOpen]);
 
     const handleStartPause = () => {
-        if (isActive) { // Pausing
+        if (isActive) {
             if (timeSpentInSession > 0) {
                 onSessionComplete(timeSpentInSession, selectedTag);
             }
-            setTimeSpentInSession(0); // Reset for next segment
+            setTimeSpentInSession(0);
         }
         setIsActive(!isActive);
     };
 
     const handleFinish = () => {
         if (timerId.current) clearInterval(timerId.current);
-        
+
         if (timeSpentInSession > 0) {
             onSessionComplete(timeSpentInSession, selectedTag);
         }
-        
+
         setIsActive(false);
         setSecondsElapsed(0);
         setTimeSpentInSession(0);
@@ -99,12 +100,12 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const secs = totalSeconds % 60;
-        
+
         const parts = [
             String(minutes).padStart(2, '0'),
             String(secs).padStart(2, '0')
         ];
-        
+
         if (hours > 0) {
             parts.unshift(String(hours).padStart(2, '0'));
         }
@@ -112,24 +113,41 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
         return parts.join(':');
     };
 
-    const handleAddNewTag = (e: React.FormEvent) => {
-        e.preventDefault();
-        const trimmedTag = newTag.trim();
-        if (trimmedTag && !tags.includes(trimmedTag)) {
-            const updatedTags = [...tags, trimmedTag];
+    const handleAddNewTag = (tagName: string) => {
+        const updatedTags = [...tags, tagName];
+        setTags(updatedTags);
+        setSelectedTag(tagName);
+        setIsTagSelectorOpen(false);
+    };
+
+    const handleDeleteTag = (tagToDelete: string) => {
+        if (onConfirmAction) {
+            onConfirmAction(
+                'Delete Tag?',
+                `Are you sure you want to delete "${tagToDelete}"? This action cannot be undone.`,
+                () => {
+                    const updatedTags = tags.filter(tag => tag !== tagToDelete);
+                    setTags(updatedTags);
+                    if (selectedTag === tagToDelete) {
+                        setSelectedTag(null);
+                    }
+                }
+            );
+        } else {
+            const updatedTags = tags.filter(tag => tag !== tagToDelete);
             setTags(updatedTags);
-            setSelectedTag(trimmedTag);
-            setNewTag('');
-            setIsTagSelectorOpen(false);
+            if (selectedTag === tagToDelete) {
+                setSelectedTag(null);
+            }
         }
     };
-    
-    const handleDeleteTag = (tagToDelete: string) => {
-        const updatedTags = tags.filter(tag => tag !== tagToDelete);
-        setTags(updatedTags);
-        if (selectedTag === tagToDelete) {
-            setSelectedTag(null);
-        }
+
+    const handleTagsReorder = (newTags: string[]) => {
+        setTags(newTags);
+    };
+
+    const handleTagSelect = (tag: string | null) => {
+        setSelectedTag(tag);
     };
 
     return (
@@ -156,64 +174,31 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
                         </button>
 
                         {isTagSelectorOpen && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 p-2 z-30 animate-[fade-in_0.1s_ease-out]">
-                                <ul className="max-h-64 overflow-y-auto pr-1">
-                                    <li className="rounded-md hover:bg-slate-100">
-                                        <button
-                                            onClick={() => { setSelectedTag(null); setIsTagSelectorOpen(false); }}
-                                            className="w-full text-left px-3 py-1.5 text-slate-500"
-                                        >
-                                            No Tag
-                                        </button>
-                                    </li>
-                                    {tags.length > 0 && <li className="h-px bg-slate-200 my-1 mx-2"></li>}
-                                    {tags.map(tag => (
-                                        <li key={tag} className="flex items-center justify-between group rounded-md hover:bg-slate-100">
-                                            <button 
-                                                onClick={() => { setSelectedTag(tag); setIsTagSelectorOpen(false); }}
-                                                className="w-full text-left px-3 py-1.5 truncate"
-                                                title={tag}
-                                            >
-                                                {tag}
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteTag(tag)} 
-                                                className="flex-shrink-0 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 mr-1"
-                                                aria-label={`Delete tag: ${tag}`}
-                                            >
-                                                <Icon name="delete" className="text-sm" />
-                                            </button>
-                                        </li>
-                                    ))}
-                                    {tags.length === 0 && <li className="text-center text-slate-400 text-sm py-2">No tags yet.</li>}
-                                </ul>
-                                
-                                <form onSubmit={handleAddNewTag} className="mt-2 pt-2 border-t border-slate-200">
-                                    <input 
-                                        type="text" 
-                                        value={newTag}
-                                        onChange={e => setNewTag(e.target.value)}
-                                        placeholder="New tag (Enter to add)"
-                                        maxLength={16}
-                                        className="w-full p-1.5 border border-slate-300 rounded-lg text-sm focus:ring-0 focus:outline-none transition-colors"
-                                    />
-                                </form>
-                            </div>
+                            <DraggableTagList
+                                tags={tags}
+                                selectedTag={selectedTag}
+                                onTagSelect={handleTagSelect}
+                                onTagsReorder={handleTagsReorder}
+                                onTagDelete={handleDeleteTag}
+                                onAddNewTag={handleAddNewTag}
+                                onClose={() => setIsTagSelectorOpen(false)}
+                                buttonColor="green"
+                            />
                         )}
                     </div>
                 </div>
             </div>
 
             <div className="flex justify-center gap-4 mt-6">
-                <button 
-                    onClick={handleStartPause} 
+                <button
+                    onClick={handleStartPause}
                     className="w-16 h-16 flex items-center justify-center rounded-full font-semibold transition-all duration-200 focus:outline-none focus:ring-0 bg-green-500 text-white hover:bg-green-600"
                     aria-label={isActive ? 'Pause stopwatch' : 'Start stopwatch'}
                 >
                     <Icon name={isActive ? 'pause' : 'play_arrow'} className="text-3xl" />
                 </button>
-                <button 
-                    onClick={handleFinish} 
+                <button
+                    onClick={handleFinish}
                     className="w-16 h-16 flex items-center justify-center rounded-full font-semibold transition-all duration-200 focus:outline-none focus:ring-0 bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Finish and save session"
                     disabled={secondsElapsed === 0 && !isActive}
