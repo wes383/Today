@@ -4,6 +4,8 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
+    MouseSensor,
     useSensor,
     useSensors,
     DragEndEvent,
@@ -68,7 +70,7 @@ const SortableTagItem: React.FC<SortableTagItemProps> = ({ tag, onTagSelect, onT
                 <div
                     {...attributes}
                     {...listeners}
-                    className="text-slate-400 text-sm mr-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab active:cursor-grabbing p-1"
+                    className="text-slate-400 text-sm mr-2 opacity-50 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab active:cursor-grabbing p-1 touch-none"
                 >
                     <Icon name="drag_indicator" className="text-sm" />
                 </div>
@@ -111,9 +113,15 @@ const DraggableTagList: React.FC<DraggableTagListProps> = ({
     const containerRef = useRef<HTMLUListElement>(null);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 200,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -202,7 +210,7 @@ const DraggableTagList: React.FC<DraggableTagListProps> = ({
                         onChange={e => setNewTag(e.target.value)}
                         placeholder="New tag"
                         maxLength={16}
-                        className="flex-1 p-1.5 border border-slate-300 rounded-lg text-sm focus:ring-0 focus:outline-none transition-colors"
+                        className="flex-1 min-w-0 p-1.5 border border-slate-300 rounded-lg text-sm focus:ring-0 focus:outline-none transition-colors"
                     />
                     <button
                         type="submit"

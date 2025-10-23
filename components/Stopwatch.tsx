@@ -26,6 +26,8 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
 
     const timerId = useRef<number | null>(null);
     const tagSelectorRef = useRef<HTMLDivElement | null>(null);
+    const startTimeRef = useRef<number | null>(null);
+    const pausedTimeRef = useRef<number>(0);
 
     useEffect(() => {
         onIsActiveChange?.(isActive);
@@ -33,19 +35,36 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
 
     useEffect(() => {
         if (isActive) {
-            timerId.current = window.setInterval(() => {
-                setSecondsElapsed(prev => prev + 1);
-                setTimeSpentInSession(prev => prev + 1);
-            }, 1000);
+            if (!startTimeRef.current) {
+                startTimeRef.current = Date.now() - (pausedTimeRef.current * 1000);
+            }
+
+            const updateTimer = () => {
+                if (!startTimeRef.current) return;
+                const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+                setSecondsElapsed(elapsed);
+                setTimeSpentInSession(elapsed - pausedTimeRef.current);
+            };
+
+            updateTimer();
+            timerId.current = window.setInterval(updateTimer, 1000);
+
+            const handleVisibilityChange = () => {
+                if (!document.hidden) updateTimer();
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            return () => {
+                if (timerId.current) clearInterval(timerId.current);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+            };
         } else if (timerId.current) {
             clearInterval(timerId.current);
             timerId.current = null;
         }
 
         return () => {
-            if (timerId.current) {
-                clearInterval(timerId.current);
-            }
+            if (timerId.current) clearInterval(timerId.current);
         };
     }, [isActive]);
 
@@ -79,7 +98,9 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
             if (timeSpentInSession > 0) {
                 onSessionComplete(timeSpentInSession, selectedTag);
             }
+            pausedTimeRef.current = secondsElapsed;
             setTimeSpentInSession(0);
+            startTimeRef.current = null;
         }
         setIsActive(!isActive);
     };
@@ -94,6 +115,8 @@ const Stopwatch: React.FC<StopwatchProps> = ({ onSessionComplete, onIsActiveChan
         setIsActive(false);
         setSecondsElapsed(0);
         setTimeSpentInSession(0);
+        startTimeRef.current = null;
+        pausedTimeRef.current = 0;
     };
 
     const formatTime = (totalSeconds: number): string => {

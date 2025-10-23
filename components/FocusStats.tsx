@@ -153,7 +153,7 @@ const FocusStats: React.FC<FocusStatsProps> = ({ sessions, onDeleteSession }) =>
                 </p>
                 <div className="flex flex-wrap justify-center items-center gap-3">
                     {Array.from({ length: completedDays }).map((_, index) => (
-                        <div key={`completed-${index}`} className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center transition-transform hover:scale-110" title={`Milestone #${index + 1}: 24 hours of focus completed!`}>
+                        <div key={`completed-${index}`} className="w-16 h-16 rounded-full bg-white border-4 border-green-500 flex items-center justify-center transition-transform hover:scale-110" title={`Milestone #${index + 1}: 24 hours of focus completed!`}>
                             <span className="font-bold text-2xl text-green-600">{index + 1}</span>
                         </div>
                     ))}

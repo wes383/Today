@@ -32,6 +32,8 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
     const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
     const timeInputRef = useRef<HTMLInputElement | null>(null);
     const tagSelectorRef = useRef<HTMLDivElement | null>(null);
+    const startTimeRef = useRef<number | null>(null);
+    const targetEndTimeRef = useRef<number | null>(null);
 
     // Effect for handling the timer countdown
     useEffect(() => {
@@ -40,13 +42,52 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
 
     useEffect(() => {
         if (isActive && secondsLeft > 0) {
-            timerId.current = window.setInterval(() => {
-                setSecondsLeft(prev => prev - 1);
-                setTimeSpentInSession(prev => prev + 1);
-            }, 1000);
+            if (!startTimeRef.current || !targetEndTimeRef.current) {
+                startTimeRef.current = Date.now();
+                targetEndTimeRef.current = Date.now() + secondsLeft * 1000;
+            }
+
+            const updateTimer = () => {
+                if (!targetEndTimeRef.current) return;
+
+                const now = Date.now();
+                const remaining = Math.max(0, Math.ceil((targetEndTimeRef.current - now) / 1000));
+                const elapsed = Math.floor((now - (startTimeRef.current || now)) / 1000);
+
+                setSecondsLeft(remaining);
+                setTimeSpentInSession(elapsed);
+
+                if (remaining === 0) {
+                    if (timerId.current) {
+                        clearInterval(timerId.current);
+                        timerId.current = null;
+                    }
+                    startTimeRef.current = null;
+                    targetEndTimeRef.current = null;
+                }
+            };
+
+            updateTimer();
+            timerId.current = window.setInterval(updateTimer, 1000);
+
+            const handleVisibilityChange = () => {
+                if (!document.hidden) {
+                    updateTimer();
+                }
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            return () => {
+                if (timerId.current) {
+                    clearInterval(timerId.current);
+                }
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+            };
         } else if (timerId.current) {
             clearInterval(timerId.current);
             timerId.current = null;
+            startTimeRef.current = null;
+            targetEndTimeRef.current = null;
         }
 
         return () => {
@@ -54,7 +95,7 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
                 clearInterval(timerId.current);
             }
         };
-    }, [isActive, secondsLeft]);
+    }, [isActive]);
 
     // Effect for handling timer completion and document title
     useEffect(() => {
@@ -83,7 +124,13 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
                 timeInputRef.current?.focus();
                 timeInputRef.current?.select();
             }, 0);
-            return () => clearTimeout(timer);
+
+            document.body.style.overflow = 'hidden';
+
+            return () => {
+                clearTimeout(timer);
+                document.body.style.overflow = '';
+            };
         }
     }, [isEditingTime, secondsLeft]);
 
@@ -123,11 +170,15 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
             }
             setTimeSpentInSession(0);
             setIsActive(false);
+            startTimeRef.current = null;
+            targetEndTimeRef.current = null;
         } else {
             // Prevent starting if duration is 0 or time has ended
             if (duration === 0 || secondsLeft === 0) {
                 return;
             }
+            startTimeRef.current = null;
+            targetEndTimeRef.current = null;
             setIsActive(true);
         }
     };
@@ -141,6 +192,8 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
         setIsEditingTime(false);
         setSecondsLeft(duration);
         setTimeSpentInSession(0);
+        startTimeRef.current = null;
+        targetEndTimeRef.current = null;
     };
 
     const selectDurationInSeconds = (newSeconds: number) => {
@@ -149,6 +202,8 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
         setDuration(newSeconds);
         setSecondsLeft(newSeconds);
         setTimeSpentInSession(0);
+        startTimeRef.current = null;
+        targetEndTimeRef.current = null;
     };
 
     const selectDuration = (minutes: number) => {
@@ -181,6 +236,7 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
 
     const handleInputWheel = (e: React.WheelEvent<HTMLInputElement>) => {
         e.preventDefault();
+        e.stopPropagation();
 
         const parts = editTimeValue.split(':').map(val => parseInt(val, 10));
         let currentSeconds = 0;
@@ -255,15 +311,16 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
 
     return (
         <div className="bg-white rounded-2xl shadow-md p-6 mb-8 animate-[fade-in_0.3s_ease-out]">
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-4">
                 <button onClick={() => selectDuration(25)} className={`${basePresetClasses} ${duration === 25 * 60 && !isEditingTime ? activePresetClasses : inactivePresetClasses}`} disabled={isActive}>25 min</button>
+                <button onClick={() => selectDuration(30)} className={`${basePresetClasses} ${duration === 30 * 60 && !isEditingTime ? activePresetClasses : inactivePresetClasses}`} disabled={isActive}>30 min</button>
                 <button onClick={() => selectDuration(45)} className={`${basePresetClasses} ${duration === 45 * 60 && !isEditingTime ? activePresetClasses : inactivePresetClasses}`} disabled={isActive}>45 min</button>
                 <button onClick={() => selectDuration(60)} className={`${basePresetClasses} ${duration === 60 * 60 && !isEditingTime ? activePresetClasses : inactivePresetClasses}`} disabled={isActive}>60 min</button>
                 <button onClick={() => selectDuration(90)} className={`${basePresetClasses} ${duration === 90 * 60 && !isEditingTime ? activePresetClasses : inactivePresetClasses}`} disabled={isActive}>90 min</button>
             </div>
 
             <div
-                className="relative w-72 h-72 mx-auto my-8 flex items-center justify-center rounded-full"
+                className="relative w-72 h-72 mx-auto my-3 flex items-center justify-center rounded-full"
                 role="timer"
                 aria-live="off"
             >
@@ -345,7 +402,7 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ initialDuration, onSessionCompl
                 </div>
             </div>
 
-            <div className="flex justify-center gap-4 mt-6">
+            <div className="flex justify-center gap-4 mt-2">
                 <button
                     onClick={handleStartPause}
                     className="w-16 h-16 flex items-center justify-center rounded-full font-semibold transition-all duration-200 focus:outline-none focus:ring-0 bg-purple-400 text-white hover:bg-purple-500"

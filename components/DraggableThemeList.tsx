@@ -4,6 +4,8 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
+    MouseSensor,
     useSensor,
     useSensors,
     DragEndEvent,
@@ -68,7 +70,7 @@ const SortableThemeItem: React.FC<SortableThemeItemProps> = ({ theme, isSelected
                 <div
                     {...attributes}
                     {...listeners}
-                    className="text-slate-400 text-sm mr-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab active:cursor-grabbing p-1"
+                    className="text-slate-400 text-sm mr-2 opacity-50 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab active:cursor-grabbing p-1 touch-none"
                 >
                     <Icon name="drag_indicator" className="text-sm" />
                 </div>
@@ -110,9 +112,15 @@ const DraggableThemeList: React.FC<DraggableThemeListProps> = ({
     const containerRef = useRef<HTMLUListElement>(null);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 200,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -192,7 +200,7 @@ const DraggableThemeList: React.FC<DraggableThemeListProps> = ({
                         onChange={e => setNewTheme(e.target.value)}
                         placeholder="New theme"
                         maxLength={20}
-                        className="flex-1 p-1.5 border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-colors"
+                        className="flex-1 min-w-0 p-1.5 border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-colors"
                     />
                     <button
                         type="submit"

@@ -390,9 +390,9 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Edit Button */}
+          {/* Edit Button - Desktop: right side, Mobile: hidden here */}
           {!isFocusTimerActive && !isStopwatchActive && !isStatsViewActive && !isCheckinViewActive && (
-            <div className="absolute right-[-8px] top-0 md:right-[-8px] md:top-1/2 md:-translate-y-1/2">
+            <div className="hidden md:block absolute right-[-8px] top-1/2 -translate-y-1/2">
               <button
                 data-role="edit-button"
                 onClick={() => setIsEditMode(!isEditMode)}
@@ -404,6 +404,20 @@ const App: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Edit Button - Mobile: above schedule list */}
+        {!isFocusTimerActive && !isStopwatchActive && !isStatsViewActive && !isCheckinViewActive && (
+          <div className="md:hidden flex justify-end mb-2">
+            <button
+              data-role="edit-button"
+              onClick={() => setIsEditMode(!isEditMode)}
+              className="font-semibold text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-2 rounded-lg"
+              aria-live="polite"
+            >
+              {isEditMode ? 'Done' : 'Edit'}
+            </button>
+          </div>
+        )}
 
         {isFocusTimerActive ? (
           <FocusTimer
