@@ -7,7 +7,6 @@
 - **Schedule Management:**
   - Easily add and delete your daily tasks and events.
   - Mark tasks as complete to track your progress.
-    <img src="https://github.com/user-attachments/assets/3ddb9bec-0d7d-46a0-8f75-36d6c3ff0d16" width="1024" alt="image" />
 - **AI Assistant:**
   - Chat with an AI to quickly add, query, or manage your schedule using natural language.
 - **Focus Tools:**
