@@ -153,8 +153,14 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, scheduleItems })
     <>
       <p className="text-sm text-slate-500 mb-4">Manage your Gemini API Key.</p>
 
-      <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm p-3 rounded-lg mb-4">
-        <p>Your API key is stored locally in your browser and is never sent to any server besides Google's.</p>
+      <div className="bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-sm p-3 rounded-lg mb-4">
+        <div className="flex items-start gap-2">
+          <Icon name="warning" className="text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-semibold mb-1">Security Warning</p>
+            <p>Your API key will be stored in plain text in your browser's local storage. Anyone with access to your browser can read it. Never save your API key on public, shared, or untrusted devices.</p>
+          </div>
+        </div>
       </div>
 
       <div>
